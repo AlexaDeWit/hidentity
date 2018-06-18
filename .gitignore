@@ -6,3 +6,4 @@ dist-newstyle
 cabal.sandbox.config
 .idea
 submodules/
+*~
