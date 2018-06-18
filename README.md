@@ -1,7 +1,7 @@
 # Building
 
-```cabal new-build```
+```cabal new-build all```
 
 # Running
 
-```cabal new-run```
+```cabal new-run hidentity```
