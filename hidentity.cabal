@@ -53,7 +53,8 @@ executable hidentity
   main-is:             Main.hs
   
   -- Modules included in this executable, other than Main.
-  other-modules:     
+  other-modules:       Entity
+                     , Entity.NordeaNdc
 
   -- LANGUAGE extensions used by modules in this package.
   -- other-extensions:    
@@ -61,6 +62,8 @@ executable hidentity
   -- Other library packages from which modules are imported.
   build-depends:        base >=4.10 && <4.12
                       , protolude
+                      , scotty
+                      , jose-jwt
   
   -- Directories containing source files.
   hs-source-dirs:      src
