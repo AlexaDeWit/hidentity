@@ -64,6 +64,7 @@ executable hidentity
                       , protolude
                       , scotty
                       , jose-jwt
+                      , configurator
   
   -- Directories containing source files.
   hs-source-dirs:      src

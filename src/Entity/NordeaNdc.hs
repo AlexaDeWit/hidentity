@@ -1,10 +1,10 @@
 module Entity.NordeaNdc
-  ( contract
+  ( channel
   ) where
 
 import Protolude (Maybe(..), ($))
-import Entity    (EntityContract(EntityContract), JweContract(..))
+import Entity
 import Jose.Jwa  (JweAlg(..), Enc(..), JwsAlg(..))
 
-contract :: EntityContract
-contract = EntityContract RS256 $ Just $ JweContract RSA_OAEP_256 A128GCM
+channel :: Channel Speedledger Nordea
+channel = symmetricalChannel Speedledger Nordea RS256 $ Just $ JweContract RSA_OAEP_256 A128GCM
