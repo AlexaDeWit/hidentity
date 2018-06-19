@@ -103,6 +103,7 @@ Test-Suite hidentity-test
   build-depends:       base >=4.10 && <4.12
                      , protolude
                      , haskell-identity
+                     , hspec
 
   ghc-options:         -Wall -Werror
   default-language:    Haskell2010
