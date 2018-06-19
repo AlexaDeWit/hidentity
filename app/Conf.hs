@@ -1,17 +1,17 @@
 module Conf
-  ( ApplicationConfiguration(..)
+  ( Environment(..)
   , confFileName
   ) where
 
 import Protolude      (show, flip, (++), Read, Show, (.))
 import Data.Text.Lazy (toLower, pack, Text)
 
-data ApplicationConfiguration
+data Environment
   = Development
   | Staging
   | Production
   deriving (Read, Show)
 
 
-confFileName :: ApplicationConfiguration -> Text
+confFileName :: Environment -> Text
 confFileName = toLower . pack . flip (++) ".conf" . show

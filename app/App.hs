@@ -6,11 +6,11 @@ module App
 
 import Conf
 import Web.Scotty
-import Protolude   (($), IO)
+import Protolude   (($), IO, show)
 import Data.Monoid (mconcat)
 
-app :: ApplicationConfiguration -> IO ()
-app _ = scotty 3000 $
+app :: Environment -> IO ()
+app env = scotty 3000 $
   get "/:word" $ do
     beam <- param "word"
-    html $ mconcat ["<h1>Scotty, ", beam, " me up!</h1>"]
+    html $ mconcat ["<h1>", show env, ", ", beam, " me up!</h1>"]

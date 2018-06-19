@@ -47,13 +47,24 @@ extra-source-files:  ChangeLog.md
 -- Constraint on the version of Cabal needed to build this package.
 cabal-version:       >=1.10
 
-
 executable hidentity
-  -- .hs or .lhs file containing the Main module.
   main-is:             Main.hs
-  
-  -- Modules included in this executable, other than Main.
-  other-modules:       Entity
+
+  hs-source-dirs:      src
+
+  build-depends:       base >=4.10 && <4.12
+                     , protolude
+                     , app
+
+  ghc-options:         -Wall -Werror
+  default-language:    Haskell2010
+
+  default-extensions:  NoImplicitPrelude
+
+
+library app
+
+  exposed-modules:     Entity
                      , Entity.NordeaNdc
                      , Conf
                      , App
@@ -70,7 +81,7 @@ executable hidentity
                       , text
   
   -- Directories containing source files.
-  hs-source-dirs:      src
+  hs-source-dirs:      app
   
   -- Base language which the package is written in.
   default-language:    Haskell2010
