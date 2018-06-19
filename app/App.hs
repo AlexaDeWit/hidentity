@@ -4,19 +4,21 @@ module App
  ( app
  ) where
 
-import Conf
-import Entity      (Speedledger(..), Nordea(..))
-import Data.String (String)
-import Data.ByteString.Lazy (ByteString)
+
+import Protolude               (($), IO, show, (>>=), liftA2, putStrLn, return, (<&>), Either(..))
+import Data.String             (String)
+import Data.ByteString.Lazy    (ByteString)
 import Web.Scotty
-import Protolude   (($), IO, show, (>>=), Maybe(..), liftA2, putStrLn, return, (<&>), (.), Either(..))
-import Data.Either.Combinators (maybeToRight, mapRight)
-import Data.Aeson  (decode, eitherDecode)
-import Jose.Jwk    (Jwk(..))
-import qualified Data.Configurator as C
+import Data.Either.Combinators (maybeToRight)
+import Data.Aeson              (eitherDecode)
+import Data.Monoid             (mconcat)
+import Data.Text.Lazy          (unpack, pack, append)
+
+import Conf
+import Entity                  (Speedledger(..), Nordea(..))
+
+import qualified Data.Configurator       as C
 import qualified Data.Configurator.Types as C
-import Data.Monoid (mconcat)
-import Data.Text.Lazy (unpack, Text, pack, append)
 
 app :: Environment -> IO ()
 app env = do
@@ -37,6 +39,6 @@ makeKeyRing conf = do
   nordeaKeyText <- C.lookup conf "IdentityKeys.Ndc"
   let slKeyStr = maybeToRight "Could not load Speedledger key" slKeyText :: Either String ByteString
   let ndcKeyStr = maybeToRight "Could not load Nordea key" nordeaKeyText :: Either String ByteString
-  let slKey = slKeyStr >>= eitherDecode <&> Speedledger
-  let ndcKey = ndcKeyStr >>= eitherDecode <&> Nordea
-  return $ liftA2 KeyRing slKey ndcKey
+  let slKeyEither = slKeyStr >>= eitherDecode <&> Speedledger
+  let ndcKeyEither = ndcKeyStr >>= eitherDecode <&> Nordea
+  return $ liftA2 KeyRing slKeyEither ndcKeyEither
