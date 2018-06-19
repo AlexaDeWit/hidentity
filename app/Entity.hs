@@ -9,19 +9,28 @@ module Entity
 
 import Protolude (Maybe)
 import Jose.Jwa  (JweAlg, Enc, JwsAlg)
+import Jose.Jwk  (Jwk)
 
-data Contract sender recipient
+data Contract s r
   = Contract
   { jwsAlg      :: JwsAlg
   , jweContract :: Maybe JweContract
+  , sender      :: s
+  , recipient   :: r
   }
 
 data JweContract
   = JweContract JweAlg Enc
 
-data Nordea = Nordea
+data Nordea
+ = Nordea
+ { nordeaKey :: Jwk
+ }
 
-data Speedledger = Speedledger
+data Speedledger
+ = Speedledger
+ { slKey :: Jwk
+ }
 
 data Channel e1 e2
  = Channel
@@ -29,7 +38,7 @@ data Channel e1 e2
   , inComing :: Contract e2 e1
   }
 
-symmetricalChannel :: entity1 -> entity2 -> JwsAlg -> Maybe JweContract -> Channel entity1 entity2
-symmetricalChannel _ _ alg jwec = Channel contract contract where
-    contract :: Contract e1 e2
-    contract = Contract alg jwec
+symmetricalChannel :: sender -> recipient -> JwsAlg -> Maybe JweContract -> Channel sender recipient
+symmetricalChannel s r alg jwec = Channel sendingContract receivingContract where
+    sendingContract   = Contract alg jwec s r
+    receivingContract = Contract alg jwec r s
