@@ -10,6 +10,7 @@ module Entity
 import Protolude (Maybe, Show)
 import Jose.Jwa  (JweAlg, Enc, JwsAlg)
 import Jose.Jwk  (Jwk)
+import Data.Aeson (Object)
 
 data Contract s r
   = Contract
@@ -24,13 +25,13 @@ data JweContract
 
 data Nordea
  = Nordea
- { nordeaKey :: Jwk
+ { nordeaKey :: Object
  }
  deriving (Show)
 
 data Speedledger
  = Speedledger
- { slKey :: Jwk
+ { slKey :: Object
  }
  deriving (Show)
 

@@ -81,6 +81,8 @@ library app
                       , text
                       , aeson
                       , either
+                      , bytestring
+                      , utility-ht
   
   -- Directories containing source files.
   hs-source-dirs:      app
