@@ -1,7 +1,7 @@
 module Contract
   ( Contract(..)
   , Channel(..)
-  , JweContract(..)
+  , PayloadFormat(..)
   , Keyable(..)
   , Direction(..)
   , symmetricalChannel
@@ -18,15 +18,11 @@ class Keyable a where
   retrieveKey :: a -> Jwk
 
 
-data JweContract
-  = JweContract JweAlg Enc
-
 data (Keyable s, Keyable r) => Contract s r
   = Contract
-  { jwsAlg      :: JwsAlg
-  , jweContract :: Maybe JweContract
-  , sender      :: s
-  , recipient   :: r
+  { payloadFormat :: PayloadFormat
+  , sender        :: s
+  , recipient     :: r
   }
 
 data (Keyable e1, Keyable e2) => Channel e1 e2
@@ -35,15 +31,20 @@ data (Keyable e1, Keyable e2) => Channel e1 e2
   , incoming :: Contract e2 e1
   }
 
+data PayloadFormat
+  = WrappedJwt JwsAlg JweAlg Enc
+  | PlainJwt JwsAlg
+
+
 data Direction
   = Incoming
   | Outgoing
 
 
-symmetricalChannel :: (Keyable sender, Keyable recipient) => sender -> recipient -> JwsAlg -> Maybe JweContract -> Channel sender recipient
-symmetricalChannel s r alg jwec = Channel sendingContract receivingContract where
-    sendingContract   = Contract alg jwec s r
-    receivingContract = Contract alg jwec r s
+symmetricalChannel :: (Keyable sender, Keyable recipient) => sender -> recipient -> PayloadFormat -> Channel sender recipient
+symmetricalChannel s r form = Channel sendingContract receivingContract where
+    sendingContract   = Contract form s r
+    receivingContract = Contract form r s
 
 retrievePayload :: (Keyable s, Keyable r) => Channel s r -> Direction -> ByteString -> Maybe ByteString
 retrievePayload channel Incoming = applyContract $ incoming channel
