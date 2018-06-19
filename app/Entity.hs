@@ -1,47 +1,21 @@
 module Entity
-  ( JweContract(..)
-  , Contract(..)
-  , Channel(..)
-  , Nordea(..)
+  ( Nordea(..)
   , Speedledger(..)
-  , symmetricalChannel
   ) where
 
-import Protolude (Maybe, Show)
-import Jose.Jwa  (JweAlg, Enc, JwsAlg)
+import Protolude (Show)
 import Jose.Jwk  (Jwk)
-import Data.Aeson (Object)
-
-data Contract s r
-  = Contract
-  { jwsAlg      :: JwsAlg
-  , jweContract :: Maybe JweContract
-  , sender      :: s
-  , recipient   :: r
-  }
-
-data JweContract
-  = JweContract JweAlg Enc
+import Contract  (Contract(..), Channel(..))
 
 data Nordea
  = Nordea
- { nordeaKey :: Object
+ { nordeaKey :: Jwk
  }
  deriving (Show)
 
 data Speedledger
  = Speedledger
- { slKey :: Object
+ { slKey :: Jwk
  }
  deriving (Show)
 
-data Channel e1 e2
- = Channel
-  { outGoing :: Contract e1 e2
-  , inComing :: Contract e2 e1
-  }
-
-symmetricalChannel :: sender -> recipient -> JwsAlg -> Maybe JweContract -> Channel sender recipient
-symmetricalChannel s r alg jwec = Channel sendingContract receivingContract where
-    sendingContract   = Contract alg jwec s r
-    receivingContract = Contract alg jwec r s

@@ -17,6 +17,7 @@ import Data.Text.Lazy          (unpack, pack, append)
 import Conf
 import Entity                  (Speedledger(..), Nordea(..))
 
+import qualified Entity.NordeaNdc        as Ndc
 import qualified Data.Configurator       as C
 import qualified Data.Configurator.Types as C
 
@@ -27,10 +28,10 @@ app env = do
   case maybeKeyRing of
     Left errText      -> putStrLn $ append (pack "Keyring could not be loaded, reason: ") (pack errText)
     Right keyRing -> do
-       scotty 3000 $
-        get "/:word" $ do
-          beam <- param "word"
-          html $ mconcat ["<h1>", show env, ", ", beam, " me up!</h1>"]
+      let ndcChannel = Ndc.channel (speedledger keyRing) (nordea keyRing)
+      scotty 3000 $
+        post "/validate/nordea" $ do
+          html $ mconcat ["<h1>", show env, " me up!</h1>"]
 
 
 makeKeyRing :: C.Config -> IO (Either String KeyRing)

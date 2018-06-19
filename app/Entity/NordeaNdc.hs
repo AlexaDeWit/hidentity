@@ -4,6 +4,7 @@ module Entity.NordeaNdc
 
 import Protolude (Maybe(..), ($))
 import Entity
+import Contract  (Channel(..), JweContract(..), symmetricalChannel)
 import Jose.Jwa  (JweAlg(..), Enc(..), JwsAlg(..))
 
 channel :: Speedledger -> Nordea -> Channel Speedledger Nordea
