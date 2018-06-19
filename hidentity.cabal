@@ -2,7 +2,7 @@
 -- documentation, see http://haskell.org/cabal/users-guide/
 
 -- The name of the package.
-name:                hidentity
+name:                haskell-identity
 
 -- The package version.  See the Haskell package versioning policy (PVP) 
 -- for standards guiding when and how versions should be incremented.
@@ -47,14 +47,14 @@ extra-source-files:  ChangeLog.md
 -- Constraint on the version of Cabal needed to build this package.
 cabal-version:       >=1.10
 
-executable hidentity
+Executable hidentity
   main-is:             Main.hs
 
   hs-source-dirs:      src
 
   build-depends:       base >=4.10 && <4.12
                      , protolude
-                     , app
+                     , haskell-identity
 
   ghc-options:         -Wall -Werror
   default-language:    Haskell2010
@@ -62,12 +62,13 @@ executable hidentity
   default-extensions:  NoImplicitPrelude
 
 
-library app
+Library
 
   exposed-modules:     Entity
                      , Entity.NordeaNdc
                      , Conf
                      , App
+                     , Contract
 
   -- LANGUAGE extensions used by modules in this package.
   -- other-extensions:    
