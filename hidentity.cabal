@@ -79,6 +79,7 @@ library app
                       , jose-jwt
                       , configurator
                       , text
+                      , aeson
   
   -- Directories containing source files.
   hs-source-dirs:      app
