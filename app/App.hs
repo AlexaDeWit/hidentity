@@ -7,8 +7,9 @@ module App
 import Conf
 import Entity      (Speedledger(..), Nordea(..))
 import Web.Scotty
-import Protolude   (($), IO, show, (>>=), Maybe(..), liftA2, putStrLn, return, (<&>))
-import Data.Aeson  (decode)
+import Protolude   (($), IO, show, (>>=), Maybe(..), liftA2, putStrLn, return, (<&>), (.), Either)
+import Data.Either.Combinators (maybeToLeft)
+import Data.Aeson  (decode, eitherDecode)
 import Jose.Jwk    (Jwk(..))
 import qualified Data.Configurator as C
 import qualified Data.Configurator.Types as C
@@ -32,6 +33,6 @@ makeKeyRing :: C.Config -> IO (Maybe KeyRing)
 makeKeyRing conf = do
   slKeyText     <- C.lookup conf "IdentityKeys.Speedledger"
   nordeaKeyText <- C.lookup conf "IdentityKeys.Ndc"
-  let slKey = slKeyText >>= decode <&> Speedledger
-  let ndcKey = nordeaKeyText >>= decode <&> Nordea
+  let slKey = slKeyText >>= decode <&> Speedledger :: Maybe Speedledger
+  let ndcKey = (>>=) nordeaKeyText decode <&> Nordea :: Maybe Nordea
   return $ liftA2 KeyRing slKey ndcKey

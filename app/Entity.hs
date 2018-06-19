@@ -7,7 +7,7 @@ module Entity
   , symmetricalChannel
   ) where
 
-import Protolude (Maybe)
+import Protolude (Maybe, Show)
 import Jose.Jwa  (JweAlg, Enc, JwsAlg)
 import Jose.Jwk  (Jwk)
 
@@ -26,11 +26,13 @@ data Nordea
  = Nordea
  { nordeaKey :: Jwk
  }
+ deriving (Show)
 
 data Speedledger
  = Speedledger
  { slKey :: Jwk
  }
+ deriving (Show)
 
 data Channel e1 e2
  = Channel

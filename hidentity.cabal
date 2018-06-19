@@ -80,6 +80,7 @@ library app
                       , configurator
                       , text
                       , aeson
+                      , either
   
   -- Directories containing source files.
   hs-source-dirs:      app
