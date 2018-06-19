@@ -55,6 +55,8 @@ executable hidentity
   -- Modules included in this executable, other than Main.
   other-modules:       Entity
                      , Entity.NordeaNdc
+                     , Conf
+                     , App
 
   -- LANGUAGE extensions used by modules in this package.
   -- other-extensions:    
@@ -65,6 +67,7 @@ executable hidentity
                       , scotty
                       , jose-jwt
                       , configurator
+                      , text
   
   -- Directories containing source files.
   hs-source-dirs:      src
