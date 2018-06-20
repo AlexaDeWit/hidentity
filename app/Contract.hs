@@ -10,7 +10,7 @@ module Contract
   , retrievePayload
   ) where
 
-import Protolude               (($), Either(..), IO, return, Maybe(..), Show)
+import Protolude               (($), Either(..), IO, return, Maybe(..), Show, show)
 import Data.ByteString         (ByteString)
 import Data.String             (String)
 import Data.ByteString.Lazy    (fromStrict)
@@ -48,9 +48,14 @@ data Direction
   = Incoming
   | Outgoing
 
+data FormatError
+  = NoNestedJweContent String
+  | InextricableJwtClaims String
+  deriving (Show)
+
 data PayloadError
   = JwtErr JwtError
-  | IncorrectFormatError
+  | FormatError FormatError
   | AesonParseError String
   deriving (Show)
 
@@ -71,7 +76,7 @@ retrievePayload channel direction =
         result <- jwkDecode recipientKey input
         case result of
           Right (Unsecured content) -> decodeAndUnpackJwt (retrieveKey $ sender contract) jwsAlg content
-          Right _                   -> return $ Left IncorrectFormatError
+          Right inner               -> return $ Left $ FormatError $ NoNestedJweContent $ show inner
           Left err                  -> return $ Left $ JwtErr err
   in
   case direction of
@@ -83,5 +88,5 @@ decodeAndUnpackJwt key alg input = do
   result <- Jwt.decode [key] (Just $ JwsEncoding alg) input
   return $ case result of
     Right (Jws (_, claimsBlob)) -> mapLeft AesonParseError $ Aeson.eitherDecode $ fromStrict claimsBlob
-    Right _                     -> Left IncorrectFormatError
+    Right inner                 -> Left $ FormatError $ InextricableJwtClaims $ show inner
     Left err                    -> Left $ JwtErr err
