@@ -87,6 +87,7 @@ Library
                       , utility-ht
                       , http-types
                       , wai-extra
+                      , wai
   
   -- Directories containing source files.
   hs-source-dirs:      app
