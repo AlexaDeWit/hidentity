@@ -11,6 +11,7 @@ import Data.ByteString.Lazy    (ByteString, toStrict)
 import Web.Scotty
 import Data.Either.Combinators (maybeToRight)
 import Data.Text.Lazy          (unpack, pack, append)
+import Network.Wai.Middleware.RequestLogger
 
 import Conf
 import Entity                  (Speedledger(..), Nordea(..))
@@ -33,6 +34,9 @@ app env = do
     Right keyRing -> do
       let ndcChannel = Ndc.channel (speedledger keyRing) (nordea keyRing)
       scotty 3000 $ do
+
+        middleware logStdoutDev
+
         post "/nordea/validate" $ do
           claims <- getClaimsFromBody ndcChannel
           View.parsedClaims claims
