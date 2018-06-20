@@ -1,0 +1,3 @@
+[submodule "jose-jwt"]
+	path = jose-jwt
+	url = git@github.com:speedledger/jose-jwt.git
