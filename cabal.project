@@ -1,2 +1,2 @@
-packages:         submodules/jose-jwt/ .
+packages:         jose-jwt/ .
 package hidentity
