@@ -10,13 +10,14 @@ import Data.String             (String)
 import Data.ByteString.Lazy    (ByteString)
 import Web.Scotty
 import Data.Either.Combinators (maybeToRight)
-import Data.Aeson              (eitherDecode)
 import Data.Monoid             (mconcat)
 import Data.Text.Lazy          (unpack, pack, append)
 
 import Conf
 import Entity                  (Speedledger(..), Nordea(..))
+import Contract                (retrievePayload, Direction(..), ClaimsBlob(..))
 
+import qualified Data.Aeson              as Aeson
 import qualified Entity.NordeaNdc        as Ndc
 import qualified Data.Configurator       as C
 import qualified Data.Configurator.Types as C
@@ -31,7 +32,11 @@ app env = do
       let ndcChannel = Ndc.channel (speedledger keyRing) (nordea keyRing)
       scotty 3000 $
         post "/validate/nordea" $ do
-          html $ mconcat ["<h1>", show env, " me up!</h1>"]
+          payload <- body
+          decoded <- retrievePayload ndcChannel Incoming payload
+          html $ case decoded of
+            Left err                   -> show err
+            Right (ClaimsBlob payload) -> payload
 
 
 makeKeyRing :: C.Config -> IO (Either String KeyRing)
@@ -40,6 +45,6 @@ makeKeyRing conf = do
   nordeaKeyText <- C.lookup conf "IdentityKeys.Ndc"
   let slKeyStr = maybeToRight "Could not load Speedledger key" slKeyText :: Either String ByteString
   let ndcKeyStr = maybeToRight "Could not load Nordea key" nordeaKeyText :: Either String ByteString
-  let slKeyEither = slKeyStr >>= eitherDecode <&> Speedledger
-  let ndcKeyEither = ndcKeyStr >>= eitherDecode <&> Nordea
+  let slKeyEither = slKeyStr >>= Aeson.eitherDecode <&> Speedledger
+  let ndcKeyEither = ndcKeyStr >>= Aeson.eitherDecode <&> Nordea
   return $ liftA2 KeyRing slKeyEither ndcKeyEither
