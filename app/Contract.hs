@@ -4,7 +4,7 @@ module Contract
   , PayloadFormat(..)
   , Keyable(..)
   , Direction(..)
-  , ClaimsBlob(..)
+  , Claims
   , PayloadError(..)
   , symmetricalChannel
   , retrievePayload
@@ -12,12 +12,16 @@ module Contract
 
 import Protolude               (($), Either(..), IO, return, Maybe(..), Show)
 import Data.ByteString         (ByteString)
+import Data.String             (String)
+import Data.ByteString.Lazy    (fromStrict)
+import Data.Either.Combinators (mapLeft)
 import Jose.Jwk                (Jwk)
 import Jose.Jwa                (JweAlg, Enc, JwsAlg)
 import Jose.Jwe                (jwkDecode)
 import Jose.Jwt                (JwtContent(..), JwtError(..), JwtEncoding(..))
 
-import qualified Jose.Jwt as   Jwt
+import qualified Data.Aeson    as Aeson
+import qualified Jose.Jwt      as Jwt
 
 class Keyable a where
   retrieveKey :: a -> Jwk
@@ -47,19 +51,20 @@ data Direction
 data PayloadError
   = JwtErr JwtError
   | IncorrectFormatError
+  | AesonParseError String
   deriving (Show)
 
-newtype ClaimsBlob = ClaimsBlob ByteString
+type Claims = Aeson.Object
 
 symmetricalChannel :: (Keyable sender, Keyable recipient) => sender -> recipient -> PayloadFormat -> Channel sender recipient
 symmetricalChannel s r form = Channel sendingContract receivingContract where
     sendingContract   = Contract form s r
     receivingContract = Contract form r s
 
-retrievePayload :: (Keyable s, Keyable r) => Channel s r -> Direction -> ByteString -> IO (Either PayloadError ClaimsBlob)
+retrievePayload :: (Keyable s, Keyable r) => Channel s r -> Direction -> ByteString -> IO (Either PayloadError Claims)
 retrievePayload channel direction =
   let
-    unpack :: (Keyable s, Keyable r) => Contract s r -> ByteString -> IO (Either PayloadError ClaimsBlob)
+    unpack :: (Keyable s, Keyable r) => Contract s r -> ByteString -> IO (Either PayloadError Claims)
     unpack contract input = case payloadFormat contract of
       WrappedJwt jwsAlg _ _ -> do
         let recipientKey = retrieveKey $ recipient contract
@@ -73,10 +78,10 @@ retrievePayload channel direction =
     Incoming -> unpack $ incoming channel
     Outgoing -> unpack $ outgoing channel
 
-decodeAndUnpackJwt :: Jwk -> JwsAlg -> ByteString -> IO (Either PayloadError ClaimsBlob)
+decodeAndUnpackJwt :: Jwk -> JwsAlg -> ByteString -> IO (Either PayloadError Claims)
 decodeAndUnpackJwt key alg input = do
   result <- Jwt.decode [key] (Just $ JwsEncoding alg) input
   return $ case result of
-    Right (Jws (_, claimsBlob)) -> Right $ ClaimsBlob claimsBlob
+    Right (Jws (_, claimsBlob)) -> mapLeft AesonParseError $ Aeson.eitherDecode $ fromStrict claimsBlob
     Right _                     -> Left IncorrectFormatError
     Left err                    -> Left $ JwtErr err

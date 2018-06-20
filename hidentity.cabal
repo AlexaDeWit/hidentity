@@ -85,6 +85,7 @@ Library
                       , either
                       , bytestring
                       , utility-ht
+                      , http-types
   
   -- Directories containing source files.
   hs-source-dirs:      app

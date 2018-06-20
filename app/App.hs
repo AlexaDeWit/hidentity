@@ -14,7 +14,7 @@ import Data.Text.Lazy          (unpack, pack, append)
 
 import Conf
 import Entity                  (Speedledger(..), Nordea(..))
-import Contract                (retrievePayload, Direction(..), ClaimsBlob, PayloadError, Channel, Keyable)
+import Contract                (retrievePayload, Direction(..), Claims, PayloadError, Channel, Keyable)
 
 import qualified Data.Aeson              as Aeson
 import qualified Data.Configurator       as C
@@ -51,7 +51,7 @@ makeKeyRing conf = do
 getClaimsFromBody
   :: (Keyable s, Keyable r)
   => Channel s r
-  -> ActionM (Either PayloadError ClaimsBlob)
+  -> ActionM (Either PayloadError Claims)
 getClaimsFromBody channel = do
   payload <- body
   liftIO $ retrievePayload channel Incoming $ toStrict payload
