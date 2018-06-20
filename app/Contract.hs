@@ -8,16 +8,17 @@ module Contract
   , PayloadError(..)
   , symmetricalChannel
   , retrievePayload
+  , encodePayload
   ) where
 
 import Protolude               (($), Either(..), IO, return, Maybe(..), Show, show)
 import Data.ByteString         (ByteString)
 import Data.String             (String)
-import Data.ByteString.Lazy    (fromStrict)
+import Data.ByteString.Lazy    (fromStrict, toStrict)
 import Data.Either.Combinators (mapLeft)
 import Jose.Jwk                (Jwk)
 import Jose.Jwa                (JweAlg, Enc, JwsAlg)
-import Jose.Jwe                (jwkDecode)
+import Jose.Jwe                (jwkDecode, jwkEncode)
 import Jose.Jwt                (JwtContent(..), JwtError(..), JwtEncoding(..))
 
 import qualified Data.Aeson    as Aeson
@@ -66,7 +67,12 @@ symmetricalChannel s r form = Channel sendingContract receivingContract where
     sendingContract   = Contract form s r
     receivingContract = Contract form r s
 
-retrievePayload :: (Keyable s, Keyable r) => Channel s r -> Direction -> ByteString -> IO (Either PayloadError Claims)
+retrievePayload
+  :: (Keyable s, Keyable r)
+  => Channel s r
+  -> Direction
+  -> ByteString
+  -> IO (Either PayloadError Claims)
 retrievePayload channel direction =
   let
     unpack :: (Keyable s, Keyable r) => Contract s r -> ByteString -> IO (Either PayloadError Claims)
@@ -90,3 +96,37 @@ decodeAndUnpackJwt key alg input = do
     Right (Jws (_, claimsBlob)) -> mapLeft AesonParseError $ Aeson.eitherDecode $ fromStrict claimsBlob
     Right inner                 -> Left $ FormatError $ InextricableJwtClaims $ show inner
     Left err                    -> Left $ JwtErr err
+
+encodePayload
+  :: (Keyable s, Keyable r, Aeson.ToJSON payload)
+  => Channel s r
+  -> Direction
+  -> payload
+  -> IO (Either PayloadError Jwt.Jwt)
+encodePayload channel direction =
+  let
+    pack
+      :: (Keyable s, Keyable r, Aeson.ToJSON payload)
+      => Contract s r
+      -> payload
+      -> IO (Either PayloadError Jwt.Jwt)
+    pack contract inputObj = case payloadFormat contract of
+      WrappedJwt jwsAlg jweAlg enc -> do
+        let recipientKey = retrieveKey $ recipient contract
+        let senderKey = retrieveKey $ sender contract
+        encodedJwt <- encodeAndPackJwt senderKey jwsAlg inputObj
+        case encodedJwt of
+          Right nestedJwt -> do
+            jwePayload <- jwkEncode jweAlg enc recipientKey (Jwt.Nested nestedJwt)
+            return $ mapLeft JwtErr jwePayload
+          err             -> return err
+  in
+  case direction of
+    Incoming -> pack $ incoming channel
+    Outgoing -> pack $ outgoing channel
+
+encodeAndPackJwt :: Aeson.ToJSON payload => Jwk -> JwsAlg -> payload -> IO (Either PayloadError Jwt.Jwt)
+encodeAndPackJwt key alg inputObj = do
+  let input = Aeson.encode inputObj
+  packed <- Jwt.encode [key] (JwsEncoding alg) (Jwt.Claims $ toStrict input)
+  return $ mapLeft JwtErr packed

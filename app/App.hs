@@ -14,7 +14,7 @@ import Data.Text.Lazy          (unpack, pack, append)
 
 import Conf
 import Entity                  (Speedledger(..), Nordea(..))
-import Contract                (retrievePayload, Direction(..), Claims, PayloadError, Channel, Keyable)
+import Contract                (retrievePayload, encodePayload, Direction(..), Claims, PayloadError(..), Channel, Keyable)
 
 import qualified Data.Aeson              as Aeson
 import qualified Data.Configurator       as C
@@ -22,6 +22,7 @@ import qualified Data.Configurator.Types as C
 
 import qualified Entity.NordeaNdc        as Ndc
 import qualified View                    as View
+import qualified Jose.Jwt                as Jwt
 
 app :: Environment -> IO ()
 app env = do
@@ -31,10 +32,15 @@ app env = do
     Left errText      -> putStrLn $ append (pack "Keyring could not be loaded, reason: ") (pack errText)
     Right keyRing -> do
       let ndcChannel = Ndc.channel (speedledger keyRing) (nordea keyRing)
-      scotty 3000 $
-        post "/validate/nordea" $ do
+      scotty 3000 $ do
+        post "/nordea/validate" $ do
           claims <- getClaimsFromBody ndcChannel
           View.parsedClaims claims
+
+        post "/nordea/encode" $ do
+          jwt <- getJwePayloadFromBody ndcChannel
+          View.encodedJwe jwt
+
 
 
 
@@ -55,3 +61,14 @@ getClaimsFromBody
 getClaimsFromBody channel = do
   payload <- body
   liftIO $ retrievePayload channel Incoming $ toStrict payload
+
+getJwePayloadFromBody
+  :: (Keyable s, Keyable r)
+  => Channel s r
+  -> ActionM (Either PayloadError Jwt.Jwt)
+getJwePayloadFromBody channel = do
+  claims <- body
+  let obj = Aeson.eitherDecode claims :: Either String Aeson.Object
+  liftIO $ case obj of
+    Right input  -> encodePayload channel Outgoing input
+    Left errText -> return $ Left $ AesonParseError errText
