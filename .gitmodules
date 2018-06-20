@@ -1,3 +1,0 @@
-[submodule "jose-jwt"]
-	path = jose-jwt
-	url = git@github.com:AlexaDeWit/jose-jwt.git
