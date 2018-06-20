@@ -5,6 +5,7 @@ module Contract
   , Keyable(..)
   , Direction(..)
   , ClaimsBlob(..)
+  , PayloadError(..)
   , symmetricalChannel
   , retrievePayload
   ) where

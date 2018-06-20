@@ -5,22 +5,23 @@ module App
  ) where
 
 
-import Protolude               (($), IO, show, (>>=), liftA2, putStrLn, return, (<&>), Either(..))
+import Protolude               (($), IO, (>>=), liftA2, putStrLn, return, (<&>), Either(..), liftIO)
 import Data.String             (String)
-import Data.ByteString.Lazy    (ByteString)
+import Data.ByteString.Lazy    (ByteString, toStrict)
 import Web.Scotty
 import Data.Either.Combinators (maybeToRight)
-import Data.Monoid             (mconcat)
 import Data.Text.Lazy          (unpack, pack, append)
 
 import Conf
 import Entity                  (Speedledger(..), Nordea(..))
-import Contract                (retrievePayload, Direction(..), ClaimsBlob(..))
+import Contract                (retrievePayload, Direction(..), ClaimsBlob, PayloadError, Channel, Keyable)
 
 import qualified Data.Aeson              as Aeson
-import qualified Entity.NordeaNdc        as Ndc
 import qualified Data.Configurator       as C
 import qualified Data.Configurator.Types as C
+
+import qualified Entity.NordeaNdc        as Ndc
+import qualified View                    as View
 
 app :: Environment -> IO ()
 app env = do
@@ -32,11 +33,9 @@ app env = do
       let ndcChannel = Ndc.channel (speedledger keyRing) (nordea keyRing)
       scotty 3000 $
         post "/validate/nordea" $ do
-          payload <- body
-          decoded <- retrievePayload ndcChannel Incoming payload
-          html $ case decoded of
-            Left err                   -> show err
-            Right (ClaimsBlob payload) -> payload
+          claims <- getClaimsFromBody ndcChannel
+          View.parsedClaims claims
+
 
 
 makeKeyRing :: C.Config -> IO (Either String KeyRing)
@@ -48,3 +47,11 @@ makeKeyRing conf = do
   let slKeyEither = slKeyStr >>= Aeson.eitherDecode <&> Speedledger
   let ndcKeyEither = ndcKeyStr >>= Aeson.eitherDecode <&> Nordea
   return $ liftA2 KeyRing slKeyEither ndcKeyEither
+
+getClaimsFromBody
+  :: (Keyable s, Keyable r)
+  => Channel s r
+  -> ActionM (Either PayloadError ClaimsBlob)
+getClaimsFromBody channel = do
+  payload <- body
+  liftIO $ retrievePayload channel Incoming $ toStrict payload
