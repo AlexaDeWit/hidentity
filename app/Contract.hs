@@ -75,7 +75,7 @@ retrievePayload channel direction =
         let recipientKey = retrieveKey $ recipient contract
         result <- jwkDecode recipientKey input
         case result of
-          Right (Unsecured content) -> decodeAndUnpackJwt (retrieveKey $ sender contract) jwsAlg content
+          Right (Jwe (_, content))  -> decodeAndUnpackJwt (retrieveKey $ sender contract) jwsAlg content
           Right inner               -> return $ Left $ FormatError $ NoNestedJweContent $ show inner
           Left err                  -> return $ Left $ JwtErr err
   in
