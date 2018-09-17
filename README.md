@@ -1,6 +1,10 @@
 # Building
 
-```cabal new-build all```
+```
+git submodule init
+git submodule update
+cabal new-build all
+```
 
 # Running
 
